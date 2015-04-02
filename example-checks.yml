@@ -1,0 +1,31 @@
+# check if google is reachable (returns a http 200 status)
+
+google:
+  url: http://www.google.com
+  interval: 1
+  onFail: >
+    curl --header 'Authorization: Bearer yourpushbulletAccessToken' -X POST https://api.pushbullet.com/v2/pushes --header 'Content-Type: application/json' --data-binary '{"type": "note", "title": "Google not reachable", "body": "Google is currently unreachable"}'
+
+# use minFails if you want at least X failed checks before the onFail is triggered.
+#  useful if you have for example a flaky service. the onFail command will be called on the 2nd failed check in this example
+# onRecover can be used if you want to know when something went back from the fail state to the ok success state
+# onNegative will be called on every following negative check after onFail (here from the 3rd failing check)
+# expectStatus can be used to specify multiple http codes that should be considered to be ok
+# expectText will check that the returned content from the URL contains this string, if it doesn't it will be considered an error
+
+yourService:
+  url: http://www.your.service.com
+  interval: 1
+  minFails: 2
+  expectStatus:
+    - 200
+    - 202
+    - 204
+  expectText: OK
+  onFail: >
+    python /home/pi/scripts/myAlertScript.py
+  onRecover: >
+    python /home/pi/scripts/myAlertScript.py --recovered
+  onNegative:
+    python /home/pi/scripts/myAlertScript.py --ongoing
+
