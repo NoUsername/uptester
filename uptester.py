@@ -73,7 +73,7 @@ def startChecker(statusCallback):
 
 def __timer(checks, count, statusCallback):
 	# call __timer() again in 60 seconds
-	threading.Timer(60, __timer, [checks, count+1]).start()
+	threading.Timer(60, __timer, [checks, count + 1, statusCallback]).start()
 	print("timer callback")
 	status = dict()
 	for k, v in checks.iteritems():
