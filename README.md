@@ -8,8 +8,9 @@
 Get it up and running with virtualenv:
 
 	sudo apt-get install virtualenvwrapper
-	# workon uptester or create first if it doesn't exist
-	workon uptester || (mkvirtualenv --no-site-packages uptester; workon uptester)
+	# create and activate virtualenv
+	mkvirtualenv --no-site-packages uptester
+	workon uptester
 	pip install -r requirements.txt
 
 	# get your config (here we simply use the example (won't do that much))
@@ -17,6 +18,15 @@ Get it up and running with virtualenv:
 
 	# to actually run it:
 	python uptester.py
+
+Additional notes:
+
+	# subsequent runs should be done like this:
+	workon uptester
+	python uptester.py
+
+	# if you want to start it from a shellscript (e.g. init script) you probably need this to activate the virtualenv
+	/home/yourUser/.virtualenvs/uptester/bin/python uptester.py
 
 ## configuration
 
@@ -43,3 +53,9 @@ uptester supports reporting the up-info to graphite. By default this is disabled
 	  - enabled: True
 	  - host: myGraphiteHost
 	  - port: 1234
+
+Graphite can be used to easily calculate uptime-percentages from the checks ran by uptester. Uptester reports a value of `0` to graphite if the service is unavailable or `100` if it is available. Generating a rolling average in graphite gives you a nice uptime-percentage for any desired timeframe.
+
+Example:
+
+![Graphite example graph](https://i.imgur.com/wSEwZK3.png)
