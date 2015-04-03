@@ -29,3 +29,11 @@ yourService:
   onNegative:
     python /home/pi/scripts/myAlertScript.py --ongoing
 
+
+# enable graphite integration by uncommenting the following:
+# host and port are optional, otherwise localhost with default graphite port are used
+
+#__graphite:
+#  enabled: True
+#  host: 10.10.10.1
+#  port: 1234
