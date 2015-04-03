@@ -73,7 +73,7 @@ def runCheck(check, name=''):
 				runFailCommand(check)
 				return False
 		fails = check.get(K_FAILS, 0)
-		if fails > minFails and check.has_key('onRecover'):
+		if fails >= minFails and check.has_key('onRecover'):
 			print('"%s" recovered'%name)
 			runCmd(check.get('onRecover'))
 		check[K_FAILS] = 0
