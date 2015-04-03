@@ -25,8 +25,6 @@ def readConfig():
 			meta[k] = v
 		else:
 			checks[k] = v
-			if not v.has_key('interval'):
-				raise Exception('"%s" is missing an interval value')
 			if not v.has_key('url'):
 				raise Exception('"%s" is missing an url value')
 			if not v.has_key('onFail'):
@@ -96,7 +94,7 @@ def __timer(checks, count, statusCallback):
 	print('timer callback')
 	status = dict()
 	for k, v in checks.iteritems():
-		if count % v.get('interval') == 0:
+		if count % v.get('interval', 1) == 0:
 			print('running check "%s"'%k)
 			ok = runCheck(v, k)
 			status[k] = dict(success=ok, fails=v.get(K_FAILS))

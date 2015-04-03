@@ -1,10 +1,16 @@
-# check if google is reachable (returns a http 200 status)
+# check once per minute if google is reachable (returns a http 200 status)
 
 google:
   url: http://www.google.com
   interval: 1
   onFail: >
     curl --header 'Authorization: Bearer yourpushbulletAccessToken' -X POST https://api.pushbullet.com/v2/pushes --header 'Content-Type: application/json' --data-binary '{"type": "note", "title": "Google not reachable", "body": "Google is currently unreachable"}'
+
+# the only required fields are 'url' and 'onFail' so a minimal config looks like this:
+
+bing:
+  url: http://www.bing.com
+  onFail: printf "bing not reachable\n" > /dev/null
 
 # use minFails if you want at least X failed checks before the onFail is triggered.
 #  useful if you have for example a flaky service. the onFail command will be called on the 2nd failed check in this example
