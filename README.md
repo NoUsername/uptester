@@ -33,3 +33,13 @@ See the `example-checks.yml` file for documentation about the config structure.
 
     # status of all configured checks
 	http://localhost:7676/status    
+
+## graphite reporting
+
+uptester supports reporting the up-info to graphite. By default this is disabled, to enable this just put the following into your `checks.yml`
+
+	# the host and port fields are optional, defaults are 127.0.0.1 and 2003
+	__graphite:
+	  - enabled: True
+	  - host: myGraphiteHost
+	  - port: 1234
