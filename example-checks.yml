@@ -1,3 +1,5 @@
+## 1. Configure outgoing checks (pingdom-like)
+
 # check once per minute if google is reachable (returns a http 200 status)
 
 google:
@@ -35,6 +37,21 @@ yourService:
   onNegative:
     python /home/pi/scripts/myAlertScript.py --ongoing
 
+## 2. Configure incoming checks (deadMansSnitch-like)
+
+# expect some shellscript to call:
+#  curl http://yourUptesterHost.com/alive/someTokenBestRandomlyGenerated_BS80s8elg9
+# at the end of each run. then if it does not run for 24 hours the onFail will be triggered
+somePeriodicShellScriptHook:
+  token: someTokenBestRandomlyGenerated_BS80s8elg9
+  interval: 1440
+  onFail: >
+    echo "My shellscript did not run in the last 24 hours!" | mail -s "Alert" myEmailAddress@example.com
+
+# so configuring incoming checks is as easy as outgoing, simply replace "url" with "token" and give it some unique string
+# it supports ALL OTHER fields except expectStatus and expectText
+
+## 3. Reporting to graphite
 
 # enable graphite integration by uncommenting the following:
 # host and port are optional, otherwise localhost with default graphite port are used

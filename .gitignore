@@ -57,3 +57,6 @@ docs/_build/
 target/
 
 checks.yml
+state.yml
+venv/
+log.txt

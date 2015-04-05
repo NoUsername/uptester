@@ -1,19 +1,23 @@
 #!/bin/env python
+from threading import Timer
+from persistence import Persistence
+from keep_alive_ping import KeepAlivePing
+from commons import *
 import flask
 import yaml
 import requests
-import subprocess
-import threading
 import traceback
 import json
-
-K_GRAPHITE = '__graphite'
-K_FAILS = 'fails'
+import copy
 
 reporter = None
 
+stateStore = Persistence()
+keepAlivePing = None
+
 def readConfig():
 	checks = dict()
+	pings = dict()
 	config = dict()
 	with open('checks.yml', 'r') as f:
 		config = yaml.load(f)
@@ -24,11 +28,14 @@ def readConfig():
 		if k.startswith('__'):
 			meta[k] = v
 		else:
-			checks[k] = v
-			if not v.has_key('url'):
-				raise Exception('"%s" is missing an url value')
+			if not v.has_key('url') and not v.has_key('token'):
+				raise Exception('"%s" is missing an url or token value')
 			if not v.has_key('onFail'):
 				raise Exception('"%s" is missing an onFail command')
+			if v.has_key('url'):
+				checks[k] = v
+			else:
+				pings[k] = v
 
 	if meta.has_key(K_GRAPHITE):
 		graphConf = meta[K_GRAPHITE]
@@ -37,69 +44,51 @@ def readConfig():
 			from graphite_reporter import GraphiteReporter
 			reporter = GraphiteReporter(graphConf.get('host', '127.0.0.1'), graphConf.get('port', 2003))
 
-	return checks
+	return (checks, pings)
 
-def runCmd(cmd):
-	subprocess.Popen(cmd, shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
-
-def runFailCommand(check):
-	fails = check.get(K_FAILS, 0) + 1
-	check[K_FAILS] = fails
-	minFails = check.get('minFails', 1)
-	if fails < minFails:
-		print('%s more fails before triggering'%(minFails - fails))
-		return
-	onFailCmd = check.get('onFail')
-	onNegativeCmd = check.get('onNegative', None)
-	if fails == minFails:
-		print('running onFail command:\n%s'%(onFailCmd))
-		# run command in background
-		runCmd(onFailCmd)
-	elif onNegativeCmd is not None:
-		runCmd(onNegativeCmd)
-
-def runCheck(check, name=''):
-	minFails = check.get('minFails', 1)
+def runCheck(check, name, state):
 	try:
 		res = requests.get(check.get('url'))
 		expectStatus = [200]
 		if check.has_key('expectStatus'):
 			expectStatus = check.get('expectStatus')
 		if not res.status_code in expectStatus:
-			runFailCommand(check)
+			runFailCommand(check, state)
 			return False
 		if check.has_key('expectText'):
 			if res.text.find(check.get('expectText')) == -1:
-				runFailCommand(check)
+				runFailCommand(check, state)
 				return False
-		fails = check.get(K_FAILS, 0)
-		if fails >= minFails and check.has_key('onRecover'):
-			print('"%s" recovered'%name)
-			runCmd(check.get('onRecover'))
-		check[K_FAILS] = 0
+		runRecovered(check, name, state)
 		return True
 	except:
 		print('exception during check')
 		traceback.print_exc()
-		runFailCommand(check)
+		runFailCommand(check, state)
 	return False
 
-def startChecker(statusCallback):
-	checks = readConfig()
-	__timer(checks, 0, statusCallback)
+def startChecker(checks, statusCallback):
+	states = stateStore.getInitialChecksState()
+	for k in checks:
+		if not states.has_key(k):
+			states[k] = {K_FAILS: 0, K_ALERTED: False}
+	__timer(checks, states, 0, statusCallback)
 
-def __timer(checks, count, statusCallback):
+def __timer(checks, states, count, statusCallback):
 	# call __timer() again in 60 seconds
-	threading.Timer(60, __timer, [checks, count + 1, statusCallback]).start()
+	Timer(60, __timer, [checks, states, count + 1, statusCallback]).start()
 	print('timer callback')
-	status = dict()
+	statusResult = dict()
 	for k, v in checks.iteritems():
-		if count % v.get('interval', 1) == 0:
+		state = states.get(k)
+		if count % v.get(K_INTERVAL, 1) == 0:
 			print('running check "%s"'%k)
-			ok = runCheck(v, k)
-			status[k] = dict(success=ok, fails=v.get(K_FAILS))
+			ok = runCheck(v, k, state)
 			print('check %s'%('OK' if ok else 'FAILED'))
-	statusCallback(status)
+		fails = state.get(K_FAILS)
+		statusResult[k] = buildStateResult(fails)
+	stateStore.persistChecks(states)
+	statusCallback(statusResult)
 
 # web part
 app = flask.Flask(__name__)
@@ -132,15 +121,37 @@ def status():
 	cfg = flask.current_app.config
 	return __jsonResponse(json.dumps(cfg[STATUS]))
 
-if __name__=='__main__':
+@app.route('/alive', defaults=dict(token=None), methods=['POST'])
+@app.route('/alive/<token>', methods=['GET', 'POST'])
+def pingIn(token):
+	if token is None:
+		token = flask.request.form.get('token', None)
+	if token is None:
+		try:
+			jsonData = json.loads(flask.request.data)
+			token = jsonData.get('token', None)
+		except:
+			pass
 
+	if token is not None:
+		keepAlivePing.onToken(token)
+		return __textResponse("OK\ntoken %s"%token)
+	return __textResponse("ERROR\nno token provided")
+
+
+if __name__=='__main__':
+	app.config[STATUS] = dict()
 	def statusCallback(data):
-		app.config[STATUS] = data
+		data = copy.deepcopy(data)
+		app.config[STATUS].update(data)
 		if reporter is not None:
 			reporter.report(data)
 
-	print('starting checker')
-	startChecker(statusCallback)
+	checkerStartDelay = 1
+	print('checker starts in %s sec' % checkerStartDelay)
+	(checks, pings) = readConfig()
+	Timer(checkerStartDelay, startChecker, [checks, statusCallback]).start()
+	keepAlivePing = KeepAlivePing(pings, stateStore.getInitialPingsState(), stateStore.persistPings, statusCallback)
 	app.config[COUNTER] = 0
 	print('starting web')
 	app.run(host='0.0.0.0', port=7676)

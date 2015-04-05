@@ -2,6 +2,7 @@
 import socket
 import time
 import re
+from commons import *
 
 def sanitize(text):
 	return re.sub('[^0-9a-zA-Z]+', '_', text)
@@ -18,7 +19,7 @@ class GraphiteReporter:
 		lines = []
 		now = int(time.time())
 		for k, v in dataDict.iteritems():
-			ok = v.get('success')
+			ok = v.get(K_SUCCESS)
 			# send "ok" value as percentage (100 as in "100% uptime")
 			lines.append("uptester.%s %s %d"%(sanitize(k), 100 if ok else 0, now))
 		message = '\n'.join(lines) + '\n' #all lines must end in a newline
