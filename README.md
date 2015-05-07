@@ -27,6 +27,8 @@ Examples of what you can do via these hooks and custom commands:
 
 ## Requirements
 
+If you want to run via docker you only need docker (skip to Docker sub-heading).
+
 * python (tested with 2.7, should work with 3 as well)
 * virtualenv and virtualenvwrapper (not required but makes it easier to run)
 
@@ -52,6 +54,15 @@ Additional notes:
 
 	# if you want to start it from a shellscript (e.g. init script) you probably need this to activate the virtualenv
 	/home/yourUser/.virtualenvs/uptester/bin/python uptester.py
+
+### Running via docker:
+
+Place your configuration (see next part) in /etc/uptester.yml and run via:
+
+	sudo docker build .
+	# get hash, e.g. 1f50ffd73437
+
+	sudo docker run -v /etc/uptester.yml:/opt/uptester/checks.yml 1f50ffd73437 /opt/uptester.sh
 
 ## Configuration
 

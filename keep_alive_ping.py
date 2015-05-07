@@ -5,7 +5,7 @@ import traceback
 import copy
 import time
 from datetime import timedelta
-from Queue import Queue
+from queue import Queue
 from commons import *
 
 class KeepAlivePing:
