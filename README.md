@@ -29,7 +29,7 @@ Examples of what you can do via these hooks and custom commands:
 
 If you want to run via docker you only need docker (skip to Docker sub-heading).
 
-* python (tested with 2.7, should work with 3 as well)
+* python (tested with 2.7 and 3.4)
 * virtualenv and virtualenvwrapper (not required but makes it easier to run)
 
 Get it up and running with virtualenv:
@@ -39,12 +39,14 @@ Get it up and running with virtualenv:
 	mkvirtualenv --no-site-packages uptester
 	workon uptester
 	pip install -r requirements.txt
+	# for python3 on ubuntu use pip3 instead of pip
 
 	# get your config (here we simply use the example (won't do that much))
 	cp example-checks.yml checks.yml
 
 	# to actually run it:
 	python uptester.py
+	# or python3 uptester.py
 
 Additional notes:
 
