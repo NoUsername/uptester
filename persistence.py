@@ -24,10 +24,10 @@ def worker(workQueue, initialState):
 	dirty = False
 	while True:
 		data = workQueue.get()
-		if data.has_key('checks'):
+		if 'checks' in data:
 			state['checks'] = data.get('checks')
 			dirty = True
-		if data.has_key('pings'):
+		if 'pings' in data:
 			state['pings'] = data.get('pings')
 			dirty = True
 		now = time.time()

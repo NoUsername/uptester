@@ -4,6 +4,7 @@ from threading import Thread, Timer
 import traceback
 import copy
 import time
+import six
 from datetime import timedelta
 from queue import Queue
 from commons import *
@@ -23,14 +24,14 @@ class KeepAlivePing:
 		self.queue = Queue()
 		self.statusCallback = statusCallback
 		self.configByToken = dict()
-		for k, v in config.iteritems():
+		for k, v in six.iteritems(config):
 			data = copy.deepcopy(v)
 			data['name'] = k
 			token = v.get(K_TOKEN)
-			if self.configByToken.has_key(token):
+			if token in self.configByToken:
 				raise Exception("token '%s' used multiple times, must be unique!"%token)
 			self.configByToken[token] = data
-			if not self.state.has_key(k):
+			if k not in self.state:
 				nextOpenInterval = time.time()
 				self.state[k] = dict(lastPing=0, nextOpenInterval=nextOpenInterval, fails=0, alerted=False)
 		self.worker = Thread(target=self.worker)
@@ -63,14 +64,14 @@ class KeepAlivePing:
 			state['nextOpenInterval'] = nextOpenInterval + intervalLength * int((now - nextOpenInterval) / intervalLength)
 
 	def checkExpired(self):
-		for token, conf in self.configByToken.iteritems():
+		for token, conf in six.iteritems(self.configByToken):
 			self.checkExpiredSingle(conf)
 		self.persistenceCallback(self.state)
 		self.publishStateUpdate()
 
 	def publishStateUpdate(self):
 		currentStateResult = dict()
-		for token, conf in self.configByToken.iteritems():
+		for token, conf in six.iteritems(self.configByToken):
 			name = conf.get('name')
 			state = self.state.get(name)
 			currentStateResult[name] = buildStateResult(state.get(K_FAILS))
@@ -104,12 +105,12 @@ class KeepAlivePing:
 		while True:
 			event = self.queue.get()
 			try:
-				if event.has_key(K_TOKEN):
+				if K_TOKEN in event:
 					token = event.get(K_TOKEN)
 					conf = self.configByToken.get(token, None)
 					if conf is not None:
 						self.updateInterval(conf)
-				elif event.has_key('timer'):
+				elif 'timer' in event:
 					print("keepAliveTimer")
 					self.checkExpired()
 			except:

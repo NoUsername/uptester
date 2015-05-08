@@ -39,7 +39,7 @@ def runFailCommand(check, state):
 def runRecovered(check, name, state):
 	minFails = check.get('minFails', 1)
 	fails = state.get(K_FAILS, 0)
-	if fails >= minFails and check.has_key('onRecover'):
+	if fails >= minFails and 'onRecover' in check:
 		print('"%s" recovered'%name)
 		runCmd(check.get('onRecover'))
 	state[K_FAILS] = 0

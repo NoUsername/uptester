@@ -61,8 +61,8 @@ Place your configuration (see next part) in /etc/uptester.yml and run via:
 
 	sudo docker build .
 	# get hash, e.g. 1f50ffd73437
-
-	sudo docker run -v /etc/uptester.yml:/opt/uptester/checks.yml 1f50ffd73437 /opt/uptester.sh
+	# make sure you have a config file and a state.yml file (state.yml can be an empty file if you are starting out)
+	sudo docker run -v /etc/uptester.yml:/opt/uptester/checks.yml -v /var/uptester-state.yml:/opt/uptester/state.yml -p 7676:7676 1f50ffd73437 /opt/uptester.sh
 
 ## Configuration
 

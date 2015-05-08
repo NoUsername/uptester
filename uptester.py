@@ -9,6 +9,7 @@ import requests
 import traceback
 import json
 import copy
+import six
 
 reporter = None
 
@@ -22,22 +23,22 @@ def readConfig():
 	with open('checks.yml', 'r') as f:
 		config = yaml.load(f)
 	meta = dict()
-	for k, v in config.iteritems():
+	for k, v in six.iteritems(config):
 		if not isinstance(v, dict):
 			raise Exception('value of "%s" is not a dictionary'%k)
 		if k.startswith('__'):
 			meta[k] = v
 		else:
-			if not v.has_key('url') and not v.has_key('token'):
+			if 'url' not in v and 'token' not in v:
 				raise Exception('"%s" is missing an url or token value')
-			if not v.has_key('onFail'):
+			if 'onFail' not in v:
 				raise Exception('"%s" is missing an onFail command')
-			if v.has_key('url'):
+			if 'url' in v:
 				checks[k] = v
 			else:
 				pings[k] = v
 
-	if meta.has_key(K_GRAPHITE):
+	if K_GRAPHITE in meta:
 		graphConf = meta[K_GRAPHITE]
 		if graphConf['enabled']:
 			global reporter
@@ -50,12 +51,12 @@ def runCheck(check, name, state):
 	try:
 		res = requests.get(check.get('url'))
 		expectStatus = [200]
-		if check.has_key('expectStatus'):
+		if 'expectStatus' in check:
 			expectStatus = check.get('expectStatus')
 		if not res.status_code in expectStatus:
 			runFailCommand(check, state)
 			return False
-		if check.has_key('expectText'):
+		if 'expectText' in check:
 			if res.text.find(check.get('expectText')) == -1:
 				runFailCommand(check, state)
 				return False
@@ -70,7 +71,7 @@ def runCheck(check, name, state):
 def startChecker(checks, statusCallback):
 	states = stateStore.getInitialChecksState()
 	for k in checks:
-		if not states.has_key(k):
+		if k not in states:
 			states[k] = {K_FAILS: 0, K_ALERTED: False}
 	__timer(checks, states, 0, statusCallback)
 
@@ -79,7 +80,7 @@ def __timer(checks, states, count, statusCallback):
 	Timer(60, __timer, [checks, states, count + 1, statusCallback]).start()
 	print('timer callback')
 	statusResult = dict()
-	for k, v in checks.iteritems():
+	for k, v in six.iteritems(checks):
 		state = states.get(k)
 		if count % v.get(K_INTERVAL, 1) == 0:
 			print('running check "%s"'%k)

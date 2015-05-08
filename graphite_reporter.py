@@ -2,6 +2,7 @@
 import socket
 import time
 import re
+import six
 from commons import *
 
 def sanitize(text):
@@ -18,7 +19,7 @@ class GraphiteReporter:
 		print("graphite reporter reporting")
 		lines = []
 		now = int(time.time())
-		for k, v in dataDict.iteritems():
+		for k, v in six.iteritems(dataDict):
 			ok = v.get(K_SUCCESS)
 			# send "ok" value as percentage (100 as in "100% uptime")
 			lines.append("uptester.%s %s %d"%(sanitize(k), 100 if ok else 0, now))

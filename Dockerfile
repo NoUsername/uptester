@@ -1,8 +1,9 @@
-FROM    debian:jessie
+FROM debian:jessie
 
 RUN apt-get update && apt-get install -y python3 \
     virtualenv \
     libyaml-dev \
+    curl \
     python3-pip
 
 RUN mkdir -p /opt/uptester
@@ -20,3 +21,5 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 CMD { test -f /opt/uptester/checks.yml || echo "no checks.yml provided!" && exit 1 } && \
 	/opt/uptester.sh
+
+EXPOSE 7676
