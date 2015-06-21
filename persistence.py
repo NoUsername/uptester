@@ -7,7 +7,7 @@ Used to keep state across restarts of uptester.
 """
 from threading import Thread, Timer
 from datetime import timedelta
-from queue import Queue
+from six.moves.queue import Queue
 import yaml
 import traceback
 import copy

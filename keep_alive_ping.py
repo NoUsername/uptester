@@ -6,7 +6,7 @@ import copy
 import time
 import six
 from datetime import timedelta
-from queue import Queue
+from six.moves.queue import Queue
 from commons import *
 
 class KeepAlivePing:
