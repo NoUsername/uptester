@@ -6,7 +6,7 @@ import copy
 import time
 import six
 from datetime import timedelta
-from six.moves.queue import Queue
+from six.moves import queue
 from commons import *
 
 class KeepAlivePing:
@@ -21,7 +21,7 @@ class KeepAlivePing:
 	def __init__(self, config, state, persistenceCallback, statusCallback):
 		self.state = copy.deepcopy(state)
 		self.persistenceCallback = persistenceCallback
-		self.queue = Queue()
+		self.queue = queue.Queue()
 		self.statusCallback = statusCallback
 		self.configByToken = dict()
 		for k, v in six.iteritems(config):

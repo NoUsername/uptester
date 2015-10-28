@@ -7,7 +7,7 @@ Used to keep state across restarts of uptester.
 """
 from threading import Thread, Timer
 from datetime import timedelta
-from six.moves.queue import Queue
+from six.moves import queue
 import yaml
 import traceback
 import copy
@@ -65,7 +65,7 @@ def triggerSaveTimer(queue):
 
 
 class Persistence:
-	workQueue = Queue()
+	workQueue = queue.Queue()
 	initialState = readState()
 	workerThread = Thread(target=worker, args=[workQueue, initialState])
 	workerThread.daemon = True
