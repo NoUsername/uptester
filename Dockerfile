@@ -1,25 +1,16 @@
-FROM debian:jessie
-
-RUN apt-get update && apt-get install -y python3 \
-    virtualenv \
-    libyaml-dev \
-    curl \
-    python3-pip
+FROM python:3.6-alpine3.7
 
 RUN mkdir -p /opt/uptester
-COPY *.py *.txt /opt/uptester/
 
-RUN virtualenv --python=python3 /root/.uptester && \
-    . /root/.uptester/bin/activate && \
-    cd /opt/uptester && \
-    pip3 install -r requirements.txt
+WORKDIR /opt/uptester
 
-RUN printf "#!/bin/sh\ncd /opt/uptester\n. /root/.uptester/bin/activate\npython3 -u uptester.py" > /opt/uptester.sh && \
+COPY *.py *.txt ./
+
+RUN pip install -r requirements.txt
+
+RUN printf '#!/bin/sh\ntest -f /opt/uptester/checks.yml || ( printf "no checks.yml provided!\\n" && exit 1 )\ncd /opt/uptester\npython -u uptester.py' > /opt/uptester.sh && \
 	chmod ugo+x /opt/uptester.sh
 
-RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-CMD { test -f /opt/uptester/checks.yml || echo "no checks.yml provided!" && exit 1 } && \
-	/opt/uptester.sh
+CMD /opt/uptester.sh
 
 EXPOSE 7676
